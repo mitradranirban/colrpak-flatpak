@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Colr Pak
+Comment=A standalone desktop font editor for authoring COLRv0 and COLRv1 color fonts
+Exec=colrpak %F
+Icon=in.atipra.ColrPak
+Terminal=false
+Categories=Graphics;Development;
+StartupNotify=true

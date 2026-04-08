@@ -1,0 +1,192 @@
+name: Flatpak Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
+
+env:
+  APP_ID: in.atipra.ColrPak
+  RUNTIME_REPO: "https://flathub.org/repo/flathub.flatpakrepo"
+
+jobs:
+  update-sources:
+    name: Update Sources
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    container:
+      image: ghcr.io/flathub/flatpak-external-data-checker
+      options: --privileged
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check for external data updates
+        run: /app/flatpak-external-data-checker --update --commit-only ${{ github.workspace }}/${{ env.APP_ID }}.yml
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update external data sources"
+          title: "chore: update external data sources"
+          body: "Automated update of external data sources from flatpak-external-data-checker"
+          branch: "update-sources"
+          base: ${{ github.ref_name }}
+
+
+  flatpak:
+    name: "Build Flatpak (${{ matrix.variant.arch }})"
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
+      options: --privileged
+    strategy:
+      matrix:
+        variant:
+          - arch: x86_64
+            runner: ubuntu-latest
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.variant.runner }}
+    if: github.event_name != 'schedule'
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Import GPG key
+        id: import_gpg
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          trust_level: 5
+
+      - name: Install base app dependency
+        run: |
+          flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install -y flathub com.riverbankcomputing.PyQt.BaseApp//6.9
+          flatpak install -y flathub org.freedesktop.Sdk.Extension.node22//25.08
+
+      - name: Export GPG public key
+        run: |
+          gpg --export --armor ${{ steps.import_gpg.outputs.keyid }} > repo.gpg
+
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          manifest-path: ${{ env.APP_ID }}.yml
+          bundle: ${{ env.APP_ID }}.flatpak
+          branch: ${{ github.ref_name }}
+          arch: ${{ matrix.variant.arch }}
+          gpg-sign: ${{ steps.import_gpg.outputs.keyid }}
+          upload-artifact: true
+          cache-key: flatpak-builder-${{ matrix.variant.arch }}-${{ github.sha }}
+          repository-name: repo
+          verbose: true
+
+      - name: Import GPG key into repository
+        run: |
+          flatpak build-update-repo --gpg-import=repo.gpg repo/
+
+      - name: Generate repository summary
+        run: |
+          flatpak build-update-repo --gpg-sign=${{ steps.import_gpg.outputs.keyid }} --generate-static-deltas --prune repo/
+
+      - name: Upload OSTree repository
+        uses: actions/upload-artifact@v4
+        with:
+          name: flatpak-repo-${{ matrix.variant.arch }}
+          path: repo/
+
+  pages:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: flatpak
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download x86_64 repo
+        uses: actions/download-artifact@v4
+        with:
+          name: flatpak-repo-x86_64
+          path: repo-x86_64
+
+      - name: Download aarch64 repo
+        uses: actions/download-artifact@v4
+        with:
+          name: flatpak-repo-aarch64
+          path: repo-aarch64
+
+      - name: Import GPG key
+        id: import_gpg
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          trust_level: 5
+
+      - name: Install flatpak
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak ostree
+
+      - name: Merge multi-arch repositories
+        run: |
+          mkdir -p repo-x86_64/refs/remotes
+          mkdir -p repo-aarch64/refs/remotes
+          ostree init --mode=archive-z2 --repo=repo
+
+          echo "=== Merging x86_64 ==="
+          for ref in $(ostree --repo=repo-x86_64 refs); do
+            echo "  $ref"
+            ostree --repo=repo pull-local repo-x86_64 "$ref"
+          done
+
+          echo "=== Merging aarch64 ==="
+          for ref in $(ostree --repo=repo-aarch64 refs); do
+            echo "  $ref"
+            ostree --repo=repo pull-local repo-aarch64 "$ref"
+          done
+
+          echo "=== Signing with GPG key ID: ${{ steps.import_gpg.outputs.keyid }} ==="
+          flatpak build-update-repo --gpg-sign=${{ steps.import_gpg.outputs.keyid }} --generate-static-deltas repo/
+
+
+      - name: Create public directory
+        run: |
+          mkdir -p public
+          cp -r repo/* public/
+          cp ${{ env.APP_ID }}.flatpakref public/
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
