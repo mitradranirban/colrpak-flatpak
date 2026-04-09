@@ -89,6 +89,20 @@
                     "sha256": "df505bc9d19e3e08274832e36faef7042008e6bf431e77d130b65a03a410a7e7"
                 }
             ]
+        },
+        {
+            "name": "python3-pkgconfig",
+            "buildsystem": "simple",
+            "build-commands": [
+                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"pkgconfig\""
+            ],
+            "sources": [
+                {
+                    "type": "file",
+                    "url": "https://files.pythonhosted.org/packages/75/6f/f7ec07fba48f07c555cc4099481df644fbbc12067879072c17ac229f6556/pkgconfig-1.6.0-py3-none-any.whl",
+                    "sha256": "98e71754855e9563838d952a160eb577edabb57782e49853edb5381927e6bea1"
+                }
+            ]
         }
     ]
 }
