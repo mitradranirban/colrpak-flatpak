@@ -70,7 +70,7 @@ modules:
   - type: git
     url: https://github.com/mitradranirban/colr-pak.git
     tag: v0.4.0
-    commit: 616b30ec3fda02755db71813148334eeee8bc879
+    commit: 0c9a1bbe638b17693953b2446499687a7d25ea38
   - type: file
     path: data/icons/in.atipra.ColrPak.svg
     dest-filename: in.atipra.ColrPak.svg
