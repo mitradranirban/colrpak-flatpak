@@ -7,11 +7,12 @@ on:
   repository_dispatch:
     types: [update-manifest]
   workflow_dispatch:
+
 jobs:
-  update-manifest:
+  update-hashes:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Required so the bot can push the updated manifest
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -74,7 +75,7 @@ jobs:
                           result = subprocess.run(cmd, capture_output=True, text=True)
 
                           if result.returncode == 0 and result.stdout.strip():
-                              lines = result.stdout.strip().split('/n')
+                              lines = result.stdout.strip().splitlines()
                               new_hash = lines[0].split()[0]
 
                               for line in lines:
@@ -105,19 +106,19 @@ jobs:
       - name: Generate PyPI Dependencies
         run: |
           # Extract the colr-pak commit hash from the updated manifest
-          COMMIT=$(python -c "
+          COMMIT=$(python -c '
           import sys
           from ruamel.yaml import YAML
           yaml = YAML()
-          with open('in.atipra.ColrPak.yml', 'r') as f:
+          with open("in.atipra.ColrPak.yml", "r") as f:
               data = yaml.load(f)
-          for m in data.get('modules', []):
+          for m in data.get("modules", []):
               if isinstance(m, dict):
-                  for s in m.get('sources', []):
-                      if isinstance(s, dict) and s.get('type') == 'git' and 'colr-pak.git' in s.get('url', ''):
-                          print(s.get('commit'))
+                  for s in m.get("sources", []):
+                      if isinstance(s, dict) and s.get("type") == "git" and "colr-pak.git" in s.get("url", ""):
+                          print(s.get("commit"))
                           sys.exit(0)
-          ")
+          ')
 
           if [ -z "$COMMIT" ]; then
             echo "Error: Could not find colr-pak commit hash in manifest."
@@ -127,16 +128,13 @@ jobs:
           echo "Using Colr Pak commit: $COMMIT"
           curl -sSL "https://raw.githubusercontent.com/mitradranirban/colr-pak/${COMMIT}/requirements.txt" -o requirements.txt
 
-          # Filter out git dependencies and any editable install flags
-	sed -E '/^(#|$)/d; /fontra/d; /fontra-compile/d; /fontra-glyphs/d; /fontra-rcjk/d; /delocate/d; /[Pp]y[Qq]t/d' requirements.txt > requirements-flatpak.txt
-	
+          # Filter out git dependencies, editable install flags, and PyQt packages
+          sed -E '/^(#|$)/d; /fontra/d; /fontra-compile/d; /fontra-glyphs/d; /fontra-rcjk/d; /delocate/d; /[Pp]y[Qq]t/d' requirements.txt > requirements-flatpak.txt
+
           echo "Filtered requirements:"
           cat requirements-flatpak.txt
 
-          # Download the flatpak pip generator
           curl -O https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator
-
-          # Generate the dependencies json using the 25.08 SDK
           python flatpak-pip-generator --runtime='org.freedesktop.Sdk//25.08' --requirements-file=requirements-flatpak.txt --output pypi-dependencies
 
       - name: Commit and Push Changes
