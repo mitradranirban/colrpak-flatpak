@@ -32,69 +32,7 @@ jobs:
         env:
           NEW_APP_TAG: ${{ github.event.client_payload.tag }}
         run: |
-          python << 'EOF'
-          import subprocess
-          import sys
-          import os
-          from ruamel.yaml import YAML
-
-          yaml = YAML()
-          yaml.preserve_quotes = True
-
-          manifest_file = 'in.atipra.ColrPak.yml'
-          new_app_tag = os.environ.get('NEW_APP_TAG')
-
-          try:
-              with open(manifest_file, 'r') as f:
-                  data = yaml.load(f)
-          except FileNotFoundError:
-              print(f"Error: {manifest_file} not found.")
-              sys.exit(1)
-
-          changed = False
-
-          for module in data.get('modules', []):
-              if isinstance(module, dict) and 'sources' in module:
-                  for source in module['sources']:
-                      if source.get('type') == 'git':
-                          url = source.get('url')
-
-                          if url and 'colr-pak.git' in url and new_app_tag:
-                              if source.get('tag') != new_app_tag:
-                                  print(f"Updating {url} tag to {new_app_tag}")
-                                  source['tag'] = new_app_tag
-                                  changed = True
-
-                          ref = 'HEAD'
-                          if 'branch' in source:
-                              ref = f"refs/heads/{source['branch']}"
-                          elif 'tag' in source:
-                              ref = f"refs/tags/{source['tag']}"
-
-                          cmd = ['git', 'ls-remote', url, ref]
-                          result = subprocess.run(cmd, capture_output=True, text=True)
-
-                          if result.returncode == 0 and result.stdout.strip():
-                              lines = result.stdout.strip().splitlines()
-                              new_hash = lines[0].split()[0]
-
-                              for line in lines:
-                                  if line.endswith('^{}'):
-                                      new_hash = line.split()[0]
-                                      break
-
-                              if source.get('commit') != new_hash:
-                                  print(f"Updating {url} commit from {source.get('commit')} to {new_hash}")
-                                  source['commit'] = new_hash
-                                  changed = True
-
-          if changed:
-              with open(manifest_file, 'w') as f:
-                  yaml.dump(data, f)
-              print("Manifest updated successfully.")
-          else:
-              print("All hashes are already up to date.")
-          EOF
+         python3 .github/tools/update-manifest.py
 
       - name: Install Flatpak and SDK
         run: |
@@ -126,8 +64,7 @@ jobs:
           fi
   
           echo "Using Colr Pak commit: $COMMIT"
-          curl -sSL "https://raw.githubusercontent.com/mitradranirban/colr-pak/refs/heads/main/requirements.txt" -o requirements.txt
-          
+          curl -sSL "https://raw.githubusercontent.com/mitradranirban/colr-pak/${COMMIT}/requirements.txt" -o requirements.txt 
           # Build tools (pkgconfig, setuptools, wheel)
           echo -e "pkgconfig\nsetuptools\nwheel" > build-tools.txt
           python3 .github/tools/flatpak-pip-generator.py --build-isolation --runtime='org.freedesktop.Sdk//25.08' --requirements-file=build-tools.txt --output build-tools.json
@@ -139,7 +76,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add in.atipra.ColrPak.yml build-tools.json runtime-deps.json
+          git add -A in.atipra.ColrPak.yml build-tools.json runtime-deps.json
 
 
           if git diff --staged --quiet; then
