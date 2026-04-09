@@ -131,10 +131,13 @@ jobs:
           # Filter out git dependencies, editable install flags, and PyQt packages
           sed -E '/^(#|$)/d; /fontra/d; /fontra-compile/d; /fontra-glyphs/d; /fontra-rcjk/d; /delocate/d; /[Pp]y[Qq]t/d' requirements.txt > requirements-flatpak.txt
 
+          # Add Flatpak-only build dependency if missing
+          grep -qxF 'pkgconfig' requirements-flatpak.txt || echo 'pkgconfig' >> requirements-flatpak.txt
+
           echo "Filtered requirements:"
           cat requirements-flatpak.txt
 
-          curl -o flatpak-pip-generator.py https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator.py
+          curl -sSL https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator.py -o flatpak-pip-generator.py
           python flatpak-pip-generator.py --build-isolation --runtime='org.freedesktop.Sdk//25.08' --requirements-file=requirements-flatpak.txt --output pypi-dependencies
       - name: Commit and Push Changes
         run: |
