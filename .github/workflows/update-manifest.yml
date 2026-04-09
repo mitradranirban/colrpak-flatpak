@@ -127,19 +127,20 @@ jobs:
   
           echo "Using Colr Pak commit: $COMMIT"
           curl -sSL "https://raw.githubusercontent.com/mitradranirban/colr-pak/refs/heads/main/requirements.txt" -o requirements.txt
-          curl -sSL https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator.py -o flatpak-pip-generator.py
-          # 1. Build tools (pkgconfig, setuptools, wheel)
+          
+          # Build tools (pkgconfig, setuptools, wheel)
           echo -e "pkgconfig\nsetuptools\nwheel" > build-tools.txt
-          python flatpak-pip-generator.py --build-isolation --runtime='org.freedesktop.Sdk//25.08' --requirements-file=build-tools.txt --output build-tools.json
+          python3 .github/tools/flatpak-pip-generator.py --build-isolation --runtime='org.freedesktop.Sdk//25.08' --requirements-file=build-tools.txt --output build-tools.json
 
-          # 2. Runtime packages (aiohttp, psutil, etc.)
+          # Runtime packages (aiohttp, psutil, etc.)
           sed -E '/^(#|$)/d; /fontra/d; /fontra-compile/d; /fontra-glyphs/d; /fontra-rcjk/d; /delocate/d; /[Pp]y[Qq]t/d' requirements.txt > requirements-flatpak.txt
-          python flatpak-pip-generator.py --build-isolation --runtime='org.freedesktop.Sdk//25.08' --requirements-file=requirements-flatpak.txt --output runtime-deps.json
+          python3 .github/tools/flatpak-pip-generator.py --build-isolation --runtime='org.freedesktop.Sdk//25.08' --requirements-file=requirements-flatpak.txt --output runtime-deps.json
       - name: Commit and Push Changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add in.atipra.ColrPak.yml pypi-dependencies.json
+          git add in.atipra.ColrPak.yml build-tools.json runtime-deps.json
+
 
           if git diff --staged --quiet; then
             echo "No changes to commit."
