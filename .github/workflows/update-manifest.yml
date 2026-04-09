@@ -124,10 +124,10 @@ jobs:
             echo "Error: Could not find colr-pak commit hash in manifest."
             exit 1
           fi
-
+  
           echo "Using Colr Pak commit: $COMMIT"
           curl -sSL "https://raw.githubusercontent.com/mitradranirban/colr-pak/refs/heads/main/requirements.txt" -o requirements.txt
-
+          curl -sSL https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator.py -o flatpak-pip-generator.py
           # 1. Build tools (pkgconfig, setuptools, wheel)
           echo -e "pkgconfig\nsetuptools\nwheel" > build-tools.txt
           python flatpak-pip-generator.py --build-isolation --runtime='org.freedesktop.Sdk//25.08' --requirements-file=build-tools.txt --output build-tools.json
