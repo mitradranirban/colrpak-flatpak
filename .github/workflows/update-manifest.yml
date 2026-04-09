@@ -74,8 +74,7 @@ jobs:
                           result = subprocess.run(cmd, capture_output=True, text=True)
 
                           if result.returncode == 0 and result.stdout.strip():
-                              lines = result.stdout.strip().split('
-')
+                              lines = result.stdout.strip().split('/n')
                               new_hash = lines[0].split()[0]
 
                               for line in lines:
