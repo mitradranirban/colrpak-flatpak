@@ -7,7 +7,7 @@ import sys
 
 def get_wheel_info(name):
     """Downloads and extracts metadata for universal wheels."""
-    # Force download of universal wheels (py3-none-any)
+    print(f"Fetching universal wheel for {name}...")
     subprocess.check_call([
         sys.executable, "-m", "pip", "download", 
         "--dest", ".", "--only-binary=:all:", name
@@ -26,19 +26,21 @@ def get_wheel_info(name):
     url = f"https://files.pythonhosted.org/packages/py3/{name[0]}/{name}/{filename}"
     return name, filename, url, sha
 
-def inject(target_json):
+def modify(target_json):
     if not os.path.exists(target_json):
         print(f"Error: {target_json} not found.")
         sys.exit(1)
 
     with open(target_json, "r") as f:
-        data = json.load(f)
+        original_data = json.load(f)
 
-    new_modules = []
-    # We must inject these because the generator strips them
+    # 1. Start with a fresh module list
+    flat_modules = []
+
+    # 2. Add build hooks first (setuptools and wheel)
     for tool in ["setuptools", "wheel"]:
         name, fname, url, sha = get_wheel_info(tool)
-        new_modules.append({
+        flat_modules.append({
             "name": f"python3-{name}",
             "buildsystem": "simple",
             "build-commands": [
@@ -47,12 +49,33 @@ def inject(target_json):
             "sources": [{"type": "file", "url": url, "sha256": sha}]
         })
 
-    # Prepend to ensure they are installed before any other modules
-    data["modules"] = new_modules + data.get("modules", [])
+    # 3. Add the original generator output (like pkgconfig)
+    # If the generator put pkgconfig as the top-level name, we move its data to the list
+    if "sources" in original_data:
+        # Move the top-level module into our list
+        flat_modules.append({
+            "name": original_data.get("name", "python3-pkgconfig"),
+            "buildsystem": original_data.get("buildsystem", "simple"),
+            "build-commands": original_data.get("build-commands", []),
+            "sources": original_data.get("sources", [])
+        })
+    
+    # Also grab any modules the generator actually managed to include
+    if "modules" in original_data:
+        flat_modules.extend(original_data["modules"])
+
+    # 4. Final Clean Output Structure
+    new_data = {
+        "name": "build-tools",
+        "buildsystem": "simple",
+        "build-commands": [],
+        "modules": flat_modules
+    }
     
     with open(target_json, "w") as f:
-        json.dump(data, f, indent=4)
-    print(f"Successfully injected build tools into {target_json}")
+        json.dump(new_data, f, indent=4)
+    print(f"Successfully modified {target_json} with a flattened module structure.")
 
 if __name__ == "__main__":
-    inject("build-tools.json")  
+    # We target build-tools.json which was created by the generator
+    modify("build-tools.json")
