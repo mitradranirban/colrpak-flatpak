@@ -68,7 +68,7 @@ jobs:
           # Build tools (pkgconfig, setuptools, wheel)
           echo -e "pkgconfig\nsetuptools\nwheel" > build-tools.txt
           python3 .github/tools/flatpak-pip-generator.py  --runtime='org.freedesktop.Sdk//25.08' --requirements-file=build-tools.txt --output build-tools.json
-
+          python3 .github/tools/inject_build_tools.py
           # Runtime packages (aiohttp, psutil, etc.)
           sed -E '/^(#|$)/d; /fontra/d; /fontra-compile/d; /fontra-glyphs/d; /fontra-rcjk/d; /delocate/d; /[Pp]y[Qq]t/d' requirements.txt > requirements-flatpak.txt
           python3 .github/tools/flatpak-pip-generator.py  --runtime='org.freedesktop.Sdk//25.08' --requirements-file=requirements-flatpak.txt --output runtime-deps.json
