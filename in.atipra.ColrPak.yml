@@ -3,7 +3,7 @@ runtime: org.freedesktop.Platform
 runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
 base: com.riverbankcomputing.PyQt.BaseApp
-base-version: '6.9'
+base-version: '6.10'
 command: colrpak
 
 sdk-extensions:
@@ -87,7 +87,7 @@ modules:
       - |
         cat > ${FLATPAK_DEST}/bin/colrpak << 'EOF'
         #!/usr/bin/env sh
-        export PYTHONPATH=/app/lib/python3.12/site-packages${PYTHONPATH:+:$PYTHONPATH}
+        export PYTHONPATH=/app/lib/python3.*/site-packages${PYTHONPATH:+:$PYTHONPATH}
         cd /app/share/colrpak
         exec /app/bin/python3 ColrPakMain.py "$@"
         EOF

@@ -1,13 +1,13 @@
 name: Flatpak Build and Deploy
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Auto-Update Flatpak Git Hashes and PyPI"]
+    types:
+      - completed
     branches:
       - main
-  pull_request:
   workflow_dispatch:
-  schedule:
-    - cron: '0 2 * * *'
 
 env:
   APP_ID: in.atipra.ColrPak
@@ -50,6 +50,7 @@ jobs:
 
   flatpak:
     name: "Build Flatpak (${{ matrix.variant.arch }})"
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
       options: --privileged
@@ -81,7 +82,7 @@ jobs:
       - name: Install base app dependency
         run: |
           flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install -y flathub com.riverbankcomputing.PyQt.BaseApp//6.9
+          flatpak install -y flathub com.riverbankcomputing.PyQt.BaseApp//6.10
           flatpak install -y flathub org.freedesktop.Sdk.Extension.node22//25.08
 
       - name: Export GPG public key
