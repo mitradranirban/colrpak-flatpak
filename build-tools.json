@@ -45,35 +45,5 @@
                 }
             ]
         }
-    ],
-    "modules": [
-        {
-            "name": "python3-setuptools",
-            "buildsystem": "simple",
-            "build-commands": [
-                "pip3 install --verbose --exists-action=i --no-index --find-links=\".\" --prefix=/app setuptools-82.0.1-py3-none-any.whl"
-            ],
-            "sources": [
-                {
-                    "type": "file",
-                    "url": "https://files.pythonhosted.org/packages/py3/s/setuptools/setuptools-82.0.1-py3-none-any.whl",
-                    "sha256": "a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb"
-                }
-            ]
-        },
-        {
-            "name": "python3-wheel",
-            "buildsystem": "simple",
-            "build-commands": [
-                "pip3 install --verbose --exists-action=i --no-index --find-links=\".\" --prefix=/app wheel-0.46.3-py3-none-any.whl"
-            ],
-            "sources": [
-                {
-                    "type": "file",
-                    "url": "https://files.pythonhosted.org/packages/py3/w/wheel/wheel-0.46.3-py3-none-any.whl",
-                    "sha256": "4b399d56c9d9338230118d705d9737a2a468ccca63d5e813e2a4fc7815d8bc4d"
-                }
-            ]
-        }
     ]
 }
