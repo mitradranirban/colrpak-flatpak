@@ -139,6 +139,7 @@ jobs:
 
           curl -sSL https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator.py -o flatpak-pip-generator.py
           python flatpak-pip-generator.py --build-isolation --runtime='org.freedesktop.Sdk//25.08' --requirements-file=requirements-flatpak.txt --output pypi-dependencies
+
       - name: Commit and Push Changes
         run: |
           git config user.name "github-actions[bot]"
