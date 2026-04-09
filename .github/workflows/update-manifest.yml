@@ -134,9 +134,8 @@ jobs:
           echo "Filtered requirements:"
           cat requirements-flatpak.txt
 
-          curl -O https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator
-          python flatpak-pip-generator --runtime='org.freedesktop.Sdk//25.08' --requirements-file=requirements-flatpak.txt --output pypi-dependencies
-
+          curl -o flatpak-pip-generator.py https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator.py
+          python flatpak-pip-generator.py --runtime='org.freedesktop.Sdk//25.08' --requirements-file=requirements-flatpak.txt --output pypi-dependencies
       - name: Commit and Push Changes
         run: |
           git config user.name "github-actions[bot]"
