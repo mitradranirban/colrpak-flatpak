@@ -37,14 +37,17 @@ jobs:
             ref: ${{ github.ref }}
 
         # 1. GENERATE DEPENDENCIES ON THE HOST VM
-        - name: Install Generator Tools (Host)
+        - name: Install Generator Tools and Base App (Host)
           run: |
             sudo apt-get update
             sudo apt-get install -y flatpak python3-pip
             pip3 install ruamel.yaml requirements-parser
-            flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-            flatpak install -y --user flathub org.freedesktop.Sdk//25.08
-            flatpak install -y --user flathub org.flatpak.Builder
+            sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+            sudo flatpak install -y  flathub org.freedesktop.Sdk//25.08
+            sudo flatpak install -y flathub org.flatpak.Builder
+            sudo flatpak install -y flathub com.riverbankcomputing.PyQt.BaseApp//6.10
+            sudo flatpak install -y  flathub org.freedesktop.Sdk.Extension.node22//25.08
+
 
         - name: Generate Native PyPI Dependencies (Host)
           run: |
@@ -80,13 +83,6 @@ jobs:
             gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
             passphrase: ${{ secrets.GPG_PASSPHRASE }}
             trust_level: 5
-
-        - name: Install base app dependency
-          run: |
-            flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-            flatpak install -y --user flathub org.freedesktop.Sdk//25.08
-            flatpak install -y --user flathub com.riverbankcomputing.PyQt.BaseApp//6.10
-            flatpak install -y --user flathub org.freedesktop.Sdk.Extension.node22//25.08
 
         - name: Export GPG public key
           run: |
