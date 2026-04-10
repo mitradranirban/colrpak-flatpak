@@ -134,3 +134,7 @@ dmypy.json
 
 # Ignore OS related files
 .DS_Store
+# CI generated deps 
+runtime-deps.json
+requirements-flatpak.txt
+requirements.txt

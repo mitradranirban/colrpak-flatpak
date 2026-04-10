@@ -1,4 +1,4 @@
-name: Auto-Update Flatpak Git Hashes and PyPI
+name: Auto-Update Flatpak Git Hashes
 
 on:
   push:
@@ -34,60 +34,16 @@ jobs:
         run: |
          python3 .github/tools/update-manifest.py
 
-      - name: Install Flatpak and SDK
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y flatpak
-          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install -y --user flathub org.freedesktop.Sdk//25.08
-
-      - name: Generate PyPI Dependencies
-        run: |
-          # Extract the colr-pak commit hash from the updated manifest
-          COMMIT=$(python -c '
-          import sys
-          from ruamel.yaml import YAML
-          yaml = YAML()
-          with open("in.atipra.ColrPak.yml", "r") as f:
-              data = yaml.load(f)
-          for m in data.get("modules", []):
-              if isinstance(m, dict):
-                  for s in m.get("sources", []):
-                      if isinstance(s, dict) and s.get("type") == "git" and "colr-pak.git" in s.get("url", ""):
-                          print(s.get("commit"))
-                          sys.exit(0)
-          ')
-
-          if [ -z "$COMMIT" ]; then
-            echo "Error: Could not find colr-pak commit hash in manifest."
-            exit 1
-          fi
-  
-          echo "Using Colr Pak commit: $COMMIT"
-          curl -sSL "https://raw.githubusercontent.com/mitradranirban/colr-pak/${COMMIT}/requirements.txt" -o requirements.txt 
-          sed -E '/^(#|$)/d; /fontra/d; /fontra-compile/d; /fontra-glyphs/d; /fontra-rcjk/d; /delocate/d; /[Pp]y[Qq]t/d' requirements.txt > requirements-flatpak.txt
-          python3 .github/tools/flatpak-pip-generator.py \
-            --runtime='org.freedesktop.Sdk//25.08' \
-            --requirements-file=requirements-flatpak.txt \
-            --output runtime-deps.json
-          # 1. Standard tools as wheels
-          pip download --dest . --only-binary=:all: pkgconfig "setuptools>=67.0" wheel expandvars setuptools-scm packaging
-          
-          # 2. Cython as source (tar.gz) to avoid manylinux-x86_64 404s/arch conflicts
-          pip download --dest . --no-binary Cython Cython
-          # 3. Inject into runtime-deps.json
-          python3 .github/tools/inject_vendor_deps.py
+     
       - name: Commit and Push Changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A in.atipra.ColrPak.yml runtime-deps.json
-
-
+          git add -A in.atipra.ColrPak.yml 
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
             TAG_MSG=${NEW_APP_TAG:-"latest"}
-            git commit -m "chore: Update manifest and PyPI dependencies for colr-pak $TAG_MSG"
+            git commit -m "chore: Update manifest colr-pak $TAG_MSG"
             git push
           fi
