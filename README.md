@@ -1,6 +1,6 @@
 # ColrPak FlatPak
 ## Flatpak repository for ColrPak
-! [Screenshot](https://github com/mitradranirban/colr-pak/screenshot.png)
+! [Screenshot](https://github.com/mitradranirban/colr-pak/screenshot.png)
 
 ### Installation 
 * If Flatpak is already not enabled in your Linux distro, follow [these instructions](https://flatpak.org/setup/) for you distribution to enable it.
