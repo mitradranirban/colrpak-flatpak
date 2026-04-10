@@ -13,106 +13,107 @@ env:
   APP_ID: in.atipra.ColrPak
   RUNTIME_REPO: "https://flathub.org/repo/flathub.flatpakrepo"
 
-flatpak:
-    name: "Build Flatpak (${{ matrix.variant.arch }})" 
-    # REMOVED: job-level container directive to allow host-level setup
-    strategy:
-      fail-fast: false
-      matrix:
-        variant:
-          - arch: x86_64
-            runner: ubuntu-latest
-          - arch: aarch64
-            runner: ubuntu-24.04-arm
-    runs-on: ${{ matrix.variant.runner }}
-    if: (github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch') && github.event_name != 'schedule'
-    permissions:
-      contents: read
-      packages: read
-    
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
+jobs:
+  flatpak:
+      name: "Build Flatpak (${{ matrix.variant.arch }})" 
+      # REMOVED: job-level container directive to allow host-level setup
+      strategy:
+        fail-fast: false
+        matrix:
+          variant:
+            - arch: x86_64
+              runner: ubuntu-latest
+            - arch: aarch64
+              runner: ubuntu-24.04-arm
+      runs-on: ${{ matrix.variant.runner }}
+      if: (github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch') && github.event_name != 'schedule'
+      permissions:
+        contents: read
+        packages: read
+      
+      steps:
+        - uses: actions/checkout@v4
+          with:
+            ref: ${{ github.ref }}
 
-      # 1. GENERATE DEPENDENCIES ON THE HOST VM
-      - name: Install Generator Tools (Host)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y flatpak python3-pip
-          pip3 install ruamel.yaml requirements-parser
-          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install -y --user flathub org.freedesktop.Sdk//25.08
+        # 1. GENERATE DEPENDENCIES ON THE HOST VM
+        - name: Install Generator Tools (Host)
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y flatpak python3-pip
+            pip3 install ruamel.yaml requirements-parser
+            flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+            flatpak install -y --user flathub org.freedesktop.Sdk//25.08
 
-      - name: Generate Native PyPI Dependencies (Host)
-        run: |
-          # Extract commit from your manifest
-          COMMIT=$(python3 -c '
-          import sys
-          from ruamel.yaml import YAML
-          yaml = YAML()
-          with open("${{ env.APP_ID }}.yml", "r") as f:
-              data = yaml.load(f)
-          for m in data.get("modules", []):
-              if isinstance(m, dict):
-                  for s in m.get("sources", []):
-                      if isinstance(s, dict) and s.get("type") == "git" and "colr-pak.git" in s.get("url", ""):
-                          print(s.get("commit"))
-                          sys.exit(0)
-          ')
-          
-          echo "Using Colr Pak commit: $COMMIT"
-          curl -sSL "https://raw.githubusercontent.com/mitradranirban/colr-pak/${COMMIT}/requirements.txt" -o requirements.txt 
-          sed -E "/^(#|$)/d; /fontra/d; /fontra-compile/d; /fontra-glyphs/d; /fontra-rcjk/d; /delocate/d; /[Pp]y[Qq]t/d" requirements.txt > requirements-flatpak.txt
-          
-          # Native generation: This resolves ARM wheels on ARM runners automatically
-          python3 .github/tools/flatpak-pip-generator.py \
-            --arch=${{ matrix.variant.arch }} \
-            --requirements-file=requirements-flatpak.txt \
-            --output runtime-deps.json
+        - name: Generate Native PyPI Dependencies (Host)
+          run: |
+            # Extract commit from your manifest
+            COMMIT=$(python3 -c '
+            import sys
+            from ruamel.yaml import YAML
+            yaml = YAML()
+            with open("${{ env.APP_ID }}.yml", "r") as f:
+                data = yaml.load(f)
+            for m in data.get("modules", []):
+                if isinstance(m, dict):
+                    for s in m.get("sources", []):
+                        if isinstance(s, dict) and s.get("type") == "git" and "colr-pak.git" in s.get("url", ""):
+                            print(s.get("commit"))
+                            sys.exit(0)
+            ')
+            
+            echo "Using Colr Pak commit: $COMMIT"
+            curl -sSL "https://raw.githubusercontent.com/mitradranirban/colr-pak/${COMMIT}/requirements.txt" -o requirements.txt 
+            sed -E "/^(#|$)/d; /fontra/d; /fontra-compile/d; /fontra-glyphs/d; /fontra-rcjk/d; /delocate/d; /[Pp]y[Qq]t/d" requirements.txt > requirements-flatpak.txt
+            
+            # Native generation: This resolves ARM wheels on ARM runners automatically
+            python3 .github/tools/flatpak-pip-generator.py \
+              --arch=${{ matrix.variant.arch }} \
+              --requirements-file=requirements-flatpak.txt \
+              --output runtime-deps.json
 
-      # 2. PROCEED WITH BUILD (Action handles the container internally)
-      - name: Import GPG key
-        id: import_gpg
-        uses: crazy-max/ghaction-import-gpg@v6
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          trust_level: 5
+        # 2. PROCEED WITH BUILD (Action handles the container internally)
+        - name: Import GPG key
+          id: import_gpg
+          uses: crazy-max/ghaction-import-gpg@v6
+          with:
+            gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+            passphrase: ${{ secrets.GPG_PASSPHRASE }}
+            trust_level: 5
 
-      - name: Install base app dependency
-        run: |
-          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install -y --user flathub org.freedesktop.Sdk//25.08
-          flatpak install -y --user flathub com.riverbankcomputing.PyQt.BaseApp//6.10
-          flatpak install -y --user flathub org.freedesktop.Sdk.Extension.node22//25.08
+        - name: Install base app dependency
+          run: |
+            flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+            flatpak install -y --user flathub org.freedesktop.Sdk//25.08
+            flatpak install -y --user flathub com.riverbankcomputing.PyQt.BaseApp//6.10
+            flatpak install -y --user flathub org.freedesktop.Sdk.Extension.node22//25.08
 
-      - name: Export GPG public key
-        run: |
-          gpg --export --armor ${{ steps.import_gpg.outputs.keyid }} > repo.gpg
+        - name: Export GPG public key
+          run: |
+            gpg --export --armor ${{ steps.import_gpg.outputs.keyid }} > repo.gpg
 
-      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
-        with:
-          manifest-path: ${{ env.APP_ID }}.yml
-          bundle: ${{ env.APP_ID }}.flatpak
-          branch: ${{ github.ref_name }}
-          arch: ${{ matrix.variant.arch }}
-          gpg-sign: ${{ steps.import_gpg.outputs.keyid }}
-          upload-artifact: true
-          cache-key: flatpak-builder-${{ matrix.variant.arch }}-${{ github.sha }}
-          repository-name: repo
-          verbose: true
+        - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+          with:
+            manifest-path: ${{ env.APP_ID }}.yml
+            bundle: ${{ env.APP_ID }}.flatpak
+            branch: ${{ github.ref_name }}
+            arch: ${{ matrix.variant.arch }}
+            gpg-sign: ${{ steps.import_gpg.outputs.keyid }}
+            upload-artifact: true
+            cache-key: flatpak-builder-${{ matrix.variant.arch }}-${{ github.sha }}
+            repository-name: repo
+            verbose: true
 
-      - name: Import GPG key into repository
-        run: |
-          flatpak build-update-repo --gpg-import=repo.gpg repo/
+        - name: Import GPG key into repository
+          run: |
+            flatpak build-update-repo --gpg-import=repo.gpg repo/
 
-      - name: Generate repository summary
-        run: |
-          flatpak build-update-repo --gpg-sign=${{ steps.import_gpg.outputs.keyid }} --generate-static-deltas --prune repo/
+        - name: Generate repository summary
+          run: |
+            flatpak build-update-repo --gpg-sign=${{ steps.import_gpg.outputs.keyid }} --generate-static-deltas --prune repo/
 
-      - name: Upload OSTree repository
-        uses: actions/upload-artifact@v4
-        with:
-          name: flatpak-repo-${{ matrix.variant.arch }}
-          path: repo/
+        - name: Upload OSTree repository
+          uses: actions/upload-artifact@v4
+          with:
+            name: flatpak-repo-${{ matrix.variant.arch }}
+            path: repo/
