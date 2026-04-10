@@ -6,12 +6,13 @@ import glob
 def inject():
     target = "runtime-deps.json"
     if not os.path.exists(target):
+        print(f"Error: {target} not found.")
         return
 
     with open(target, "r") as f:
         data = json.load(f)
 
-    # Find the downloaded wheel
+    # 1. Find the downloaded wheel
     whl_files = glob.glob("pkgconfig-*.whl")
     if not whl_files:
         print("No pkgconfig wheel found to inject.")
@@ -22,7 +23,6 @@ def inject():
         sha = hashlib.sha256(f.read()).hexdigest()
 
     filename = os.path.basename(whl_file)
-    # The standard PyPI URL for the source entry
     pypi_url = f"https://files.pythonhosted.org/packages/py3/p/pkgconfig/{filename}"
 
     pkgconfig_source = {
@@ -31,13 +31,19 @@ def inject():
         "sha256": sha
     }
 
-    # Locate aiohttp and add pkgconfig to its sources
+    # 2. Process modules
     for module in data.get("modules", []):
+        # Remove --no-build-isolation from ALL modules to prevent SDK conflicts
+        if "build-commands" in module:
+            module["build-commands"] = [
+                cmd.replace(" --no-build-isolation", "") 
+                for cmd in module["build-commands"]
+            ]
+
+        # Inject pkgconfig into aiohttp specifically
         if module["name"] == "python3-aiohttp":
-            # Append pkgconfig so pip finds it via --find-links
             module["sources"].append(pkgconfig_source)
-            print(f"Successfully vendored {filename} into aiohttp sources.")
-            break
+            print(f"Successfully vendored {filename} and enabled isolation for aiohttp.")
 
     with open(target, "w") as f:
         json.dump(data, f, indent=4)
