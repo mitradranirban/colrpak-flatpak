@@ -68,7 +68,6 @@ jobs:
             
             # Native generation: This resolves ARM wheels on ARM runners automatically
             python3 .github/tools/flatpak-pip-generator.py \
-              --arch=${{ matrix.variant.arch }} \
               --requirements-file=requirements-flatpak.txt \
               --output runtime-deps.json
 
