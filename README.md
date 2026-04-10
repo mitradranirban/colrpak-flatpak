@@ -4,7 +4,7 @@
 
 ### Installation 
 * If Flatpak is already not enabled in your Linux distro, follow [these instructions](https://flatpak.org/setup/) for you distribution to enable it.
-* If Flatpak is integrated with your Software Centre (as in Fedora Workstation, Monjaro), just download [this file](https://mitradranirban.github.io/colrpak-flatpak/in atipra.ColrPak.flatpakref) , then right click it, and select "Open with -> Software Install" .
+* If Flatpak is integrated with your Software Centre (as in Fedora Workstation, Monjaro), just download [this file](https://mitradranirban.github.io/colrpak-flatpak/in.atipra.ColrPak.flatpakref) , then right click it, and select "Open with -> Software Install" .
 * Otherwise, copy and paste the following command in your terminal
 
 ```
