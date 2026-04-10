@@ -70,8 +70,11 @@ jobs:
             --runtime='org.freedesktop.Sdk//25.08' \
             --requirements-file=requirements-flatpak.txt \
             --output runtime-deps.json
-          pip download --dest . --only-binary=:all: pkgconfig "setuptools>=67.0" wheel
-
+          pip download --dest . --only-binary=:all: \
+            pkgconfig \
+            "setuptools>=67.0" \
+            wheel \
+            expandvars
           # 3. Inject into runtime-deps.json
           python3 .github/tools/inject_vendor_deps.py
       - name: Commit and Push Changes
