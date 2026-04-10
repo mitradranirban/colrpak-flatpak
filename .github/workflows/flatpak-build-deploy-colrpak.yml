@@ -90,7 +90,7 @@ jobs:
 
         - name: Flatpak Build (Using Flatpak-installed Builder)
           run: |
-              flatpak run org.flatpak.Builder \
+              flatpak run --filesystem=host org.flatpak.Builder \
               --arch=${{ matrix.variant.arch }} \
               --force-clean \
               --repo=repo \
