@@ -76,7 +76,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A in.atipra.ColrPak.yml build-tools.json runtime-deps.json
+          git add -A in.atipra.ColrPak.yml runtime-deps.json
 
 
           if git diff --staged --quiet; then
