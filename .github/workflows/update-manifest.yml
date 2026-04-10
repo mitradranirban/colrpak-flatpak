@@ -70,13 +70,11 @@ jobs:
             --runtime='org.freedesktop.Sdk//25.08' \
             --requirements-file=requirements-flatpak.txt \
             --output runtime-deps.json
-          pip download --dest . --only-binary=:all: \
-            pkgconfig \
-            "setuptools>=67.0" \
-            wheel \
-            expandvars\
-            Cython \
-            "setuptools-scm>=6.2"
+          # 1. Standard tools as wheels
+          pip download --dest . --only-binary=:all: pkgconfig "setuptools>=67.0" wheel expandvars setuptools-scm packaging
+          
+          # 2. Cython as source (tar.gz) to avoid manylinux-x86_64 404s/arch conflicts
+          pip download --dest . --no-binary Cython Cython
           # 3. Inject into runtime-deps.json
           python3 .github/tools/inject_vendor_deps.py
       - name: Commit and Push Changes

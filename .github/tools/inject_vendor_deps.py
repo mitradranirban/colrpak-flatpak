@@ -3,17 +3,23 @@ import os
 import hashlib
 import glob
 
-def get_source_entry(whl_path):
-    with open(whl_path, "rb") as f:
+def get_source_entry(file_path):
+    with open(file_path, "rb") as f:
         sha = hashlib.sha256(f.read()).hexdigest()
     
-    filename = os.path.basename(whl_path)
-    # Split filename to get the package name for the URL structure
-    pkg_name = filename.split('-')[0]
+    filename = os.path.basename(file_path)
+    pkg_name = filename.split('-')[0].replace('_', '-')
+    
+    # Logic to switch URL structure based on file type
+    if filename.endswith(".whl"):
+        url = f"https://files.pythonhosted.org/packages/py3/{pkg_name[0]}/{pkg_name}/{filename}"
+    else:
+        # Standard PyPI source URL structure
+        url = f"https://files.pythonhosted.org/packages/source/{pkg_name[0]}/{pkg_name}/{filename}"
     
     return {
         "type": "file",
-        "url": f"https://files.pythonhosted.org/packages/py3/{pkg_name[0]}/{pkg_name}/{filename}",
+        "url": url,
         "sha256": sha
     }
 
@@ -25,25 +31,20 @@ def inject():
     with open(target, "r") as f:
         data = json.load(f)
 
-    # Find all downloaded wheels (pkgconfig, setuptools, etc.)
-    whl_files = glob.glob("*.whl")
-    vendor_sources = [get_source_entry(f) for f in whl_files]
-
-    if not vendor_sources:
-        print("No wheels found to vendor.")
-        return
+    # Find BOTH wheels and source tarballs
+    vendor_files = glob.glob("*.whl") + glob.glob("*.tar.gz")
+    # Filter out the main packages that are already in the JSON to avoid duplicates
+    vendor_sources = [get_source_entry(f) for f in vendor_files if "aiohttp" not in f and "frozenlist" not in f]
 
     for module in data.get("modules", []):
-        # 1. Strip the --no-build-isolation flag if it exists
         if "build-commands" in module:
             module["build-commands"] = [
                 cmd.replace(" --no-build-isolation", "") for cmd in module["build-commands"]
             ]
 
-        # 2. Inject all vendor tools into aiohttp
         if module["name"] == "python3-aiohttp":
             module["sources"].extend(vendor_sources)
-            print(f"Vendored {len(vendor_sources)} tools into aiohttp.")
+            print(f"Vendored {len(vendor_sources)} build tools into aiohttp.")
 
     with open(target, "w") as f:
         json.dump(data, f, indent=4)
