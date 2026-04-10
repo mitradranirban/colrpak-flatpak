@@ -636,28 +636,28 @@ with tempfile.TemporaryDirectory(prefix=tempdir_prefix) as tempdir:
             os.remove(requirements_file_output)
 
     fprint("Downloading and preserving packages (including wheels)")
-        for filename in os.listdir(tempdir):
-            # Add "whl" to the endswith check to prevent the script from 
-            # trying to replace binary wheels with source tarballs.
-            if not filename.endswith(("bz2", "whl", "gz", "xz", "zip")):
-                version = get_file_version(filename)
-                name = get_package_name(filename)
-                try:
-                    url = get_tar_package_url_pypi(name, version)
-                    print(f"Downloading {url}")
-                    download_tar_pypi(url, tempdir)
-                    
-                    # Only delete the original if we successfully downloaded a source replacement
-                    print("Deleting", filename)
-                    with suppress(FileNotFoundError):
-                        os.remove(os.path.join(tempdir, filename))
-                except Exception as err:
-                    # If we can't find a source version, we keep the wheel we have
-                    print(f"Keeping existing package for {name} due to: {err}")
-                    unresolved_dependencies_errors.append(err)
+    for filename in os.listdir(tempdir):
+        # Add "whl" to the endswith check to prevent the script from 
+        # trying to replace binary wheels with source tarballs.
+        if not filename.endswith(("bz2", "whl", "gz", "xz", "zip")):
+            version = get_file_version(filename)
+            name = get_package_name(filename)
+            try:
+                url = get_tar_package_url_pypi(name, version)
+                print(f"Downloading {url}")
+                download_tar_pypi(url, tempdir)
+                
+                # Only delete the original if we successfully downloaded a source replacement
+                print("Deleting", filename)
+                with suppress(FileNotFoundError):
+                    os.remove(os.path.join(tempdir, filename))
+            except Exception as err:
+                # If we can't find a source version, we keep the wheel we have
+                print(f"Keeping existing package for {name} due to: {err}")
+                unresolved_dependencies_errors.append(err)
 
-        files: dict[str, list[str]] = {get_package_name(f): [] for f in os.listdir(tempdir)}
-
+    files: dict[str, list[str]] = {get_package_name(f): [] for f in os.listdir(tempdir)}
+    
     for filename in os.listdir(tempdir):
         name = get_package_name(filename)
         files[name].append(filename)
