@@ -57,6 +57,11 @@
                 },
                 {
                     "type": "file",
+                    "url": "https://files.pythonhosted.org/packages/py3/s/setuptools_scm/setuptools_scm-10.0.5-py3-none-any.whl",
+                    "sha256": "f611037d8aae618221503b8fa89319f073438252ae3420e01c9ceec249131a0a"
+                },
+                {
+                    "type": "file",
                     "url": "https://files.pythonhosted.org/packages/py3/p/packaging/packaging-26.0-py3-none-any.whl",
                     "sha256": "b36f1fef9334a5588b4166f8bcd26a14e521f2b55e6b9de3aaa80d3ff7a37529"
                 },
@@ -77,8 +82,18 @@
                 },
                 {
                     "type": "file",
+                    "url": "https://files.pythonhosted.org/packages/py3/c/cython/cython-3.2.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+                    "sha256": "b362819d155fff1482575e804e43e3a8825332d32baa15245f4642022664a3f4"
+                },
+                {
+                    "type": "file",
                     "url": "https://files.pythonhosted.org/packages/py3/s/setuptools/setuptools-82.0.1-py3-none-any.whl",
                     "sha256": "a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb"
+                },
+                {
+                    "type": "file",
+                    "url": "https://files.pythonhosted.org/packages/py3/v/vcs_versioning/vcs_versioning-1.1.1-py3-none-any.whl",
+                    "sha256": "b541e2ba79fc6aaa3850f8a7f88af43d97c1c80649c01142ee4146eddbc599e4"
                 }
             ]
         },
