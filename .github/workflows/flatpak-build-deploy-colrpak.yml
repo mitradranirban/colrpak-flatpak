@@ -84,7 +84,6 @@ jobs:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
     needs: flatpak
-    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow-run'
     permissions:
       contents: read
       pages: write
