@@ -72,6 +72,11 @@
                 },
                 {
                     "type": "file",
+                    "url": "https://files.pythonhosted.org/packages/py3/e/expandvars/expandvars-1.1.2-py3-none-any.whl",
+                    "sha256": "d1652fe4e61914f5b88ada93aaedb396446f55ae4621de45c8cb9f66e5712526"
+                },
+                {
+                    "type": "file",
                     "url": "https://files.pythonhosted.org/packages/py3/s/setuptools/setuptools-82.0.1-py3-none-any.whl",
                     "sha256": "a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb"
                 }
