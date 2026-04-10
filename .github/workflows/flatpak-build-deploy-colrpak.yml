@@ -43,10 +43,10 @@ jobs:
             sudo apt-get install -y flatpak python3-pip
             pip3 install ruamel.yaml requirements-parser
             sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-            sudo flatpak install -y  --installation=system flathub org.freedesktop.Sdk//25.08
-            sudo flatpak install -y --installation=system flathub org.flatpak.Builder
-            sudo flatpak install -y --installation=system flathub com.riverbankcomputing.PyQt.BaseApp//6.10
-            sudo flatpak install -y --installation=system  flathub org.freedesktop.Sdk.Extension.node22//25.08
+            sudo flatpak install -y   flathub org.freedesktop.Sdk//25.08
+            sudo flatpak install -y  flathub org.flatpak.Builder
+            sudo flatpak install -y  flathub com.riverbankcomputing.PyQt.BaseApp//6.10
+            sudo flatpak install -y   flathub org.freedesktop.Sdk.Extension.node22//25.08
 
 
         - name: Generate Native PyPI Dependencies (Host)
