@@ -7,7 +7,8 @@ on:
   repository_dispatch:
     types: [update-manifest]
   workflow_dispatch:
-
+env:
+  APP_ID: in.atipra.ColrPak
 jobs:
   update-hashes:
     runs-on: ubuntu-latest
@@ -34,6 +35,22 @@ jobs:
         run: |
          python3 .github/tools/update-manifest.py
 
+      - name: Update metainfo.xml with new release
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          VERSION="${{ github.event.client_payload.version }}"
+          # Clean 'v0.2.3' to '0.2.3'
+          VERSION_CLEAN=$(echo $VERSION | sed 's/^v//')
+          DATE=$(date +%Y-%m-%d)
+          
+          # Check if file exists to prevent build failure
+          if [ -f "${{ env.APP_ID }}.metainfo.xml" ]; then
+            # Inserts a new release tag immediately after the opening <releases> tag
+            sed -i "/<releases>/a\    <release version=\"${VERSION_CLEAN}\" date=\"${DATE}\"/>" ${{ env.APP_ID }}.metainfo.xml
+            echo "Successfully updated metainfo to $VERSION_CLEAN"
+          else
+            echo "Warning: ${{ env.APP_ID }}.metainfo.xml not found."
+          fi
      
       - name: Commit and Push Changes
         run: |
