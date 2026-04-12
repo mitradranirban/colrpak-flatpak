@@ -8,7 +8,7 @@
 * Otherwise, copy and paste the following command in your terminal
 
 ```
-flatpak install --from https://mitradranirban.github.io/colrpak-flatpak/in atipra.ColrPak.flatpakref
+flatpak install --from https://mitradranirban.github.io/colrpak-flatpak/in.atipra.ColrPak.flatpakref
 ```
 * Type Y for yes and provide your password when prompted
 * Fontrapak with all its dependancy will be installed in your computer
