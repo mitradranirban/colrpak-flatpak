@@ -137,3 +137,5 @@ dmypy.json
 # CI generated deps 
 requirements-flatpak.txt
 requirements.txt
+
+.flatpak-builder
