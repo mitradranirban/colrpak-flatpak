@@ -87,7 +87,7 @@ modules:
     #!/usr/bin/env sh
     export PYTHONPATH=/app/lib/python3.*/site-packages${PYTHONPATH:+:$PYTHONPATH}
     cd /app/share/colrpak
-    exec /app/bin/python3 ColrPakMain.py "$@"
+    exec /usr/bin/python3 ColrPakMain.py "$@"
     EOF
   - chmod +x ${FLATPAK_DEST}/bin/colrpak
 
