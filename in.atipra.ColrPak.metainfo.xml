@@ -1,29 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
   <id>in.atipra.ColrPak</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
   <name>Colr Pak</name>
   <summary>A standalone desktop font editor for authoring COLRv0 and COLRv1 color fonts</summary>
-  <project_group>Dr Anirban Mitra</project_group>
-  <url type="homepage">https://mitradranirban.github.io/colr-pak</url>
+  
   <description>
-    <p>Colr Pak is a cross-platform desktop application for designing and editing color fonts. It is a fork of Fontra Pak, extended with dedicated tooling for COLRv0 and COLRv1 color font authoring including a visual paint graph editor, palette management, and gradient handles directly on the canvas.</p>
-    <p>Your fonts stay entirely on your computer and are never uploaded anywhere. It features live canvas rendering, masterless COLRv1 variation, and one-click COLRv0 to COLRv1 upgrades.</p>
+    <p>Colr Pak is a cross-platform desktop application for designing and editing color fonts.</p>
+    <p>It features live canvas rendering, masterless COLRv1 variation, and one-click COLRv0 to COLRv1 upgrades.</p>
   </description>
-  <url type="bugtracker">https://github.com/mitradranirban/colr-pak/issues</url>
-  <categories>
-    <category>Graphics</category>
-    <category>Development</category>
-  </categories>
+
   <launchable type="desktop-id">in.atipra.ColrPak.desktop</launchable>
-  <releases>
-    <release Version 0.4.0 date= 2026-04-06/>
-  </releases>
+  
+  <url type="homepage">https://mitradranirban.github.io/colr-pak</url>
+  <url type="bugtracker">https://github.com/mitradranirban/colr-pak/issues</url>
+  
   <screenshots>
     <screenshot type="default">
-      <image>https://mitradranirban.github.io/colr-pak/colrpakshot.png</image>
       <caption>Colr Pak main interface</caption>
+      <image>https://mitradranirban.github.io/colr-pak/colrpakshot.png</image>
     </screenshot>
   </screenshots>
-  <project_license>GPL-3.0-only</project_license>
-  <metadata_license>CC0-1.0</metadata_license>
+
+  <releases>
+    <release version="0.4.0" date="2026-04-06" />
+  </releases>
+
+  <provides>
+    <id>in.atipra.ColrPak.desktop</id>
+  </provides>
+  
+  <content_rating type="oars-1.1" />
 </component>
