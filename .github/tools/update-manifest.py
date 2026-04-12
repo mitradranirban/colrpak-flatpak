@@ -10,43 +10,28 @@ yaml.preserve_quotes = True
 manifest_file = 'in.atipra.ColrPak.yml'
 new_app_tag = os.environ.get('NEW_APP_TAG')
 
+def resolve_ref_commit(url, ref_name, is_tag=False):
+    """Resolves the latest commit hash for a branch or tag."""
+    # Prefix based on whether it's a branch or a tag
+    prefix = "refs/tags/" if is_tag else "refs/heads/"
+    full_ref = f"{prefix}{ref_name}"
+    
+    # We also check for the dereferenced tag (commit it points to) using ^{}
+    cmd = ["git", "ls-remote", url, full_ref]
+    if is_tag:
+        cmd.append(f"{full_ref}^{{}}")
 
-def resolve_tag_and_commit(url, requested_tag):
-    candidates = []
-    if requested_tag:
-        candidates.append(requested_tag)
-        if not requested_tag.startswith("v"):
-            candidates.append(f"v{requested_tag}")
-
-    seen = set()
-    for tag in candidates:
-        if tag in seen:
-            continue
-        seen.add(tag)
-
-        ref = f"refs/tags/{tag}"
-        result = subprocess.run(
-            ["git", "ls-remote", url, ref, f"{ref}^{{}}"],
-            capture_output=True,
-            text=True
-        )
-
-        if result.returncode == 0 and result.stdout.strip():
-            lines = result.stdout.strip().splitlines()
-            resolved_commit = None
-
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    if result.returncode == 0 and result.stdout.strip():
+        lines = result.stdout.strip().splitlines()
+        # For tags, prioritize the dereferenced commit hash (the ^{} line)
+        if is_tag and len(lines) > 1:
             for line in lines:
                 if line.endswith("^{}"):
-                    resolved_commit = line.split()[0]
-                    break
-
-            if not resolved_commit:
-                resolved_commit = lines[0].split()[0]
-
-            return tag, resolved_commit
-
-    return None, None
-
+                    return line.split()[0]
+        return lines[0].split()[0]
+    return None
 
 try:
     with open(manifest_file, "r") as f:
@@ -62,47 +47,36 @@ for module in data.get("modules", []):
         continue
 
     for source in module.get("sources", []):
-        if not isinstance(source, dict):
-            continue
-        if source.get("type") != "git":
+        if not isinstance(source, dict) or source.get("type") != "git":
             continue
 
         url = source.get("url", "")
-        if "colr-pak.git" not in url:
-            continue
+        current_commit = source.get("commit")
+        resolved_commit = None
 
-        if new_app_tag:
-            resolved_tag, resolved_commit = resolve_tag_and_commit(url, new_app_tag)
-            if not resolved_tag or not resolved_commit:
-                print(f"Error: Could not resolve tag '{new_app_tag}' for {url}")
-                sys.exit(1)
+        # Logic for Main App (ColrPak) if a NEW_APP_TAG is provided
+        if "colr-pak.git" in url and new_app_tag:
+            # Try to resolve the specific new tag provided by the workflow
+            resolved_commit = resolve_ref_commit(url, new_app_tag, is_tag=True)
+            if resolved_commit:
+                source["tag"] = new_app_tag
+                print(f"Updating ColrPak to tag {new_app_tag}")
 
-            if source.get("tag") != resolved_tag:
-                print(f"Updating {url} tag to {resolved_tag}")
-                source["tag"] = resolved_tag
-                changed = True
-
-            if source.get("commit") != resolved_commit:
-                print(f"Updating {url} commit from {source.get('commit')} to {resolved_commit}")
-                source["commit"] = resolved_commit
-                changed = True
+        # Logic for all other Git sources (Dependencies)
         else:
-            current_tag = source.get("tag")
-            if current_tag:
-                resolved_tag, resolved_commit = resolve_tag_and_commit(url, current_tag)
-                if not resolved_tag or not resolved_commit:
-                    print(f"Error: Could not resolve existing tag '{current_tag}' for {url}")
-                    sys.exit(1)
+            if "tag" in source:
+                resolved_commit = resolve_ref_commit(url, source["tag"], is_tag=True)
+            elif "branch" in source:
+                resolved_commit = resolve_ref_commit(url, source["branch"], is_tag=False)
+            else:
+                # Default to 'main' or 'master' if no ref is specified
+                resolved_commit = resolve_ref_commit(url, "main", is_tag=False)
 
-                if source.get("tag") != resolved_tag:
-                    print(f"Normalizing {url} tag from {source.get('tag')} to {resolved_tag}")
-                    source["tag"] = resolved_tag
-                    changed = True
-
-                if source.get("commit") != resolved_commit:
-                    print(f"Refreshing {url} commit from {source.get('commit')} to {resolved_commit}")
-                    source["commit"] = resolved_commit
-                    changed = True
+        # Apply changes if the commit hash has changed
+        if resolved_commit and resolved_commit != current_commit:
+            print(f"Updating {url}: {current_commit[:7]} -> {resolved_commit[:7]}")
+            source["commit"] = resolved_commit
+            changed = True
 
 if changed:
     with open(manifest_file, "w") as f:
