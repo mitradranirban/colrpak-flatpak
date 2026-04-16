@@ -36,19 +36,19 @@ modules:
     url: https://github.com/mitradranirban/fontra.git
     branch: fontra-color-support
     dest: fontra
-    commit: 2ea01320975b3d3c88dadf15b1b3db34c121e30b
+    commit: b4a1e321c8b7a407860916b12898299f166df6bd
   - type: git
     url: https://github.com/mitradranirban/fontra-compile.git
     branch: fontra-color-support
     dest: fontra-compile
-    commit: 222365d2202411afcd358591f2af1ba23e6368ac
+    commit: 98a25eb2552443b7c8200d8867d0465c18750ede
   - type: git
     url: https://github.com/fontra/fontra-rcjk.git
     commit: a6255384c1bfe980d9c7e699a8ca73861871dd28
     dest: fontra-rcjk
   - type: git
     url: https://github.com/fontra/fontra-glyphs.git
-    commit: 3cee75f289ca01f5a8ac692bb46700cdfe0825b0
+    commit: 6c1089dc2ad17b09c025f48678875fc01c30a53d
     dest: fontra-glyphs
 
   build-commands:
