@@ -48,7 +48,7 @@ modules:
     dest: fontra-rcjk
   - type: git
     url: https://github.com/fontra/fontra-glyphs.git
-    commit: 6c1089dc2ad17b09c025f48678875fc01c30a53d
+    commit: 471209cc50e42e41b904c4729787b27abc0531ad
     dest: fontra-glyphs
 
   build-commands:
