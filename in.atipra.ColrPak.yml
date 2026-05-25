@@ -36,7 +36,7 @@ modules:
     url: https://github.com/mitradranirban/fontra.git
     branch: fontra-color-support
     dest: fontra
-    commit: 60b0298cc1c07e4b3ba7f37205446e7d8e090547
+    commit: 21c6b577d41b7cf05b1b9d6340856d4a0e5955d7
   - type: git
     url: https://github.com/mitradranirban/fontra-compile.git
     branch: fontra-color-support
