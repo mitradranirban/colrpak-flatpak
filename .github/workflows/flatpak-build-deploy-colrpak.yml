@@ -1,5 +1,4 @@
 name: Flatpak Build and Deploy
-
 on:
   workflow_run:
     workflows: ["Auto-Update Flatpak Git Hashes"]
@@ -70,9 +69,7 @@ jobs:
         run: |
           flatpak build-update-repo --gpg-import=repo.gpg repo/
 
-      - name: Generate repository summary
-        run: |
-          flatpak build-update-repo --gpg-sign=${{ steps.import_gpg.outputs.keyid }} --generate-static-deltas --prune repo/
+      # REMOVED static delta generation from here. It is broken when split inside a matrix.
 
       - name: Upload OSTree repository
         uses: actions/upload-artifact@v4
@@ -119,27 +116,38 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y flatpak ostree
 
-      - name: Merge multi-arch repositories
+      - name: Merge multi-arch repositories and generate fixed unified summary
         run: |
           mkdir -p repo-x86_64/refs/remotes
           mkdir -p repo-aarch64/refs/remotes
+          
+          # Initialize the true production repo
           ostree init --mode=archive-z2 --repo=repo
-
-          echo "=== Merging x86_64 ==="
+          
+          # Import the GPG key mapping into the unified space
+          gpg --export --armor ${{ steps.import_gpg.outputs.keyid }} > repo.gpg
+          flatpak build-update-repo --gpg-import=repo.gpg repo/
+          
+          echo "=== Merging x86_64 objects ==="
           for ref in $(ostree --repo=repo-x86_64 refs); do
             echo "  $ref"
             ostree --repo=repo pull-local repo-x86_64 "$ref"
           done
-
-          echo "=== Merging aarch64 ==="
+          
+          echo "=== Merging aarch64 objects ==="
           for ref in $(ostree --repo=repo-aarch64 refs); do
             echo "  $ref"
             ostree --repo=repo pull-local repo-aarch64 "$ref"
           done
-
-          echo "=== Signing with GPG key ID: ${{ steps.import_gpg.outputs.keyid }} ==="
-          flatpak build-update-repo --gpg-sign=${{ steps.import_gpg.outputs.keyid }} --generate-static-deltas repo/
-
+          
+          echo "=== Generating Unified Summary Matrix ==="
+          # Crucial fix: Added --all-arches and --prune inside the final unified pool
+          flatpak build-update-repo \
+            --gpg-sign=${{ steps.import_gpg.outputs.keyid }} \
+            --generate-static-deltas \
+            --all-arches \
+            --prune \
+            repo/
 
       - name: Create public directory
         run: |
