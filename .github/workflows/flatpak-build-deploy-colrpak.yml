@@ -141,7 +141,9 @@ jobs:
           done
  
           echo "=== Synthesizing Unified AppStream Metadata ==="
-          ostree --repo=repo branch appstream/x86_64 appstream
+          if [ -f repo/refs/heads/appstream/x86_64 ]; then
+            cp repo/refs/heads/appstream/x86_64 repo/refs/heads/appstream
+          fi
 
           echo "=== Generating Unified Summary Matrix ==="
           flatpak build-update-repo \
