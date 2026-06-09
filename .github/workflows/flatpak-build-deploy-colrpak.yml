@@ -111,7 +111,7 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           trust_level: 5
 
-      - name: Install flatpak
+      - name: Install dependancies
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak ostree
@@ -139,14 +139,17 @@ jobs:
             echo "  $ref"
             ostree --repo=repo pull-local repo-aarch64 "$ref"
           done
-          
+ 
+          echo "=== Synthesizing Unified AppStream Metadata ==="
+          ostree --repo=repo branch appstream/x86_64 appstream
+
           echo "=== Generating Unified Summary Matrix ==="
           flatpak build-update-repo \
             --gpg-sign=${{ steps.import_gpg.outputs.keyid }} \
             --generate-static-deltas \
             --prune \
             repo/
-          flatpak build-update-repo --generate-appstream-data repo/
+
 
       - name: Create public directory
         run: |
