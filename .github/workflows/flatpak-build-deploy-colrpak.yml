@@ -146,6 +146,7 @@ jobs:
             --generate-static-deltas \
             --prune \
             repo/
+          flatpak build-update-repo --generate-appstream-data repo/
 
       - name: Create public directory
         run: |
