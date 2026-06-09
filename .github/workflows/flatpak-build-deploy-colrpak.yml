@@ -141,11 +141,9 @@ jobs:
           done
           
           echo "=== Generating Unified Summary Matrix ==="
-          # Crucial fix: Added --all-arches and --prune inside the final unified pool
           flatpak build-update-repo \
             --gpg-sign=${{ steps.import_gpg.outputs.keyid }} \
             --generate-static-deltas \
-            --all-arches \
             --prune \
             repo/
 
