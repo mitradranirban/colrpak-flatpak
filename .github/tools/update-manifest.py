@@ -54,13 +54,29 @@ for module in data.get("modules", []):
         current_commit = source.get("commit")
         resolved_commit = None
 
-        # Logic for Main App (ColrPak) if a NEW_APP_TAG is provided
-        if "colr-pak.git" in url and new_app_tag:
-            # Try to resolve the specific new tag provided by the workflow
-            resolved_commit = resolve_ref_commit(url, new_app_tag, is_tag=True)
-            if resolved_commit:
-                source["tag"] = new_app_tag
-                print(f"Updating ColrPak to tag {new_app_tag}")
+# Logic for Main App (ColrPak)
+        if "colr-pak.git" in url:
+            tag_to_use = new_app_tag
+            if not tag_to_use:
+                # Auto-fetch latest tag if no tag provided via dispatch
+                result = subprocess.run(
+                    ["git", "ls-remote", "--tags", "--sort=-version:refname", url],
+                    capture_output=True, text=True
+                )
+                tag_to_use = next(
+                    (line.split("\t")[1].replace("refs/tags/", "").replace("^{}", "")
+                     for line in result.stdout.splitlines()
+                     if "^{}" in line),
+                    None
+                )
+            if tag_to_use:
+                resolved_commit = resolve_ref_commit(url, tag_to_use, is_tag=True)
+                if resolved_commit and (source.get("tag") != tag_to_use or resolved_commit != current_commit):
+                    source["tag"] = tag_to_use
+                    source["commit"] = resolved_commit
+                    changed = True
+                    print(f"Updating ColrPak to tag {tag_to_use}")
+            continue  # skip the generic update block below
 
         # Logic for all other Git sources (Dependencies)
         else:

@@ -139,11 +139,6 @@ jobs:
             echo "  $ref"
             ostree --repo=repo pull-local repo-aarch64 "$ref"
           done
- 
-          echo "=== Synthesizing Unified AppStream Metadata ==="
-          if [ -f repo/refs/heads/appstream/x86_64 ]; then
-            cp repo/refs/heads/appstream/x86_64 repo/refs/heads/appstream-unified
-          fi
 
           echo "=== Generating Unified Summary Matrix ==="
           flatpak build-update-repo \
