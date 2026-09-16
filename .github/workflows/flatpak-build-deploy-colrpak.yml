@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
 
       - name: Import GPG key
         id: import_gpg
@@ -90,6 +90,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
 
       - name: Download x86_64 repo
         uses: actions/download-artifact@v4
